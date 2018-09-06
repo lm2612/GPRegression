@@ -1,0 +1,12 @@
+__pycace__
+*.pyc
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.nc
+*.ncdf
+*.csv
+*.doc*
+*.xl*
+
