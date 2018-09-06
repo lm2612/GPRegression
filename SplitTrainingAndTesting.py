@@ -1,5 +1,7 @@
-def split_set(X,y,names,TestName):
-    idx_test = [names.index(TestName)]
+def split_set(X,y,names,TestNames):
+    """ Manually select test data to split for training and testing """
+    assert (all([TestName in names for TestName in TestNames])),'All scenarios listed in TestNames must be in names. Check for typos. TestNames= {0}. names={1}'.format(TestNames,names)
+    idx_test = [names.index(TestName) for TestName in TestNames]
     idx_train = [idx for idx in range(len(names)) if idx!=idx_test]
     X_train,X_test = X[idx_train],X[idx_test]
     y_train,y_test = y[idx_train],y[idx_test]
