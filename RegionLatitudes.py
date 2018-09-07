@@ -39,4 +39,4 @@ for reg in RegionList:
     ext_reg = reg+'_ext'
     (xmin,xmax,ymin,ymax) = RegionLonsLats[reg]
     RegionLonsLats[ext_reg] = ( xmin-10.,xmax+10.,ymin-10.,ymax+10.)
-
+print(type(RegionLonsLats))
