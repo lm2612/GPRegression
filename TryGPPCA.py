@@ -9,6 +9,7 @@ from ImportData import *
 from SplitTrainingAndTesting import split_set,split_set_random
 from AreaWeighting import Area,Area1
 from AverageRegions import AverageRegions
+from PlotPredictionsVsTrue_NoScaling import PredictionPlot
 
 # Predictor variable
 X = X_SfcTemp.copy()
@@ -19,10 +20,12 @@ area_flat = area.flatten()
 print(area_flat.shape,X_SfcTemp.shape)
 regions = ['Europe','Africa','US','South_America','East_Asia','India']
 
-
+# Save to
+plot_dir = '/work/lm2612/GPPCA/'
 
 # Test data set
 print(Names)
+
 
 for i in range(1):
     (X_train,X_test,y_train,y_test,names_train,names_test) = split_set_random(X,y,Names,5,20*i**2-i*4+3)
@@ -55,6 +58,12 @@ for i in range(1):
         m.plot(visible_dims=[k])
         plt.plot(X_test_trans[:,0],y_test_trans[:,0],'r^')
 
-        plt.show()
+        plt.savefig(plot_dir+'GP_plot_dim_{}.png'.formaat(k))
+    
 
+    y_pred_full = y_PCA.inverse_transform(y_pred)
+    # check output
+    rmse = np.sqrt(  np.average(( y_test - y_pred_full)**2.,axis=1,weights=area_flat )
+
+    PredictionPlot(y_test,y_pred_full,lons,lats, names_train, names_test, plot_dir,rmses)
 

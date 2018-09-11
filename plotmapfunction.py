@@ -48,7 +48,7 @@ def plotmap(lons,lats,variable,savefile=None, cmap="RdBu_r", levels=None,
                         levels=levels,extend='both')
     if colorbar == 1.0:
         cbar = map.colorbar()
-    	cbar.set_label(variable_label)
+        cbar.set_label(variable_label)
     
     plt.xlabel('Longitude')
     plt.xticks(np.arange(-180.,185.,90.))
@@ -59,7 +59,7 @@ def plotmap(lons,lats,variable,savefile=None, cmap="RdBu_r", levels=None,
 
     if type(savefile) is str:
         plt.savefig(savefile)
-        print 'Saved plot as '+savefile
+        print('Saved plot as {}'.format(savefile))
     
     
     return map, cmap 
