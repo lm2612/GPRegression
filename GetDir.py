@@ -13,7 +13,7 @@ def GetDir():
            # On Laura's Mac
            datadir = '/Users/lm2612/Documents/PhD/data/AvgData/'
         elif '/home/laura/' in cwd:
-           datadir = '/home/laura/Documents/data/'
+           datadir = '/home/laura/Documents/data/AvgData/'
         else:
             print('What PC are you on? Do not recognise from current directory so unable to define directory to read or write files. Please define manually.')
             exit()
