@@ -1,5 +1,7 @@
 # Import modules
 import numpy as np
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import GPy 
 from sklearn.decomposition import PCA
@@ -9,7 +11,7 @@ from ImportData import *
 from SplitTrainingAndTesting import split_set,split_set_random
 from AreaWeighting import Area,Area1
 from AverageRegions import AverageRegions
-from PlotPredictionsVsTrue_NoScaling import PredictionPlot
+from PlotPredictionVsTrue_NoScaling import PredictionPlot
 
 # Predictor variable
 X = X_SfcTemp.copy()
@@ -54,16 +56,16 @@ for i in range(1):
 
     
     for k in range(p):
-        plt.clf()
         m.plot(visible_dims=[k])
         plt.plot(X_test_trans[:,0],y_test_trans[:,0],'r^')
 
-        plt.savefig(plot_dir+'GP_plot_dim_{}.png'.formaat(k))
-    
+        plt.savefig(plot_dir+'GP_plot_dim_{}.png'.format(k))
+        plt.close() 
 
     y_pred_full = y_PCA.inverse_transform(y_pred)
-    # check output
-    rmse = np.sqrt(  np.average(( y_test - y_pred_full)**2.,axis=1,weights=area_flat )
+    # check output 
+    rmses = np.sqrt(  np.average(( y_test - y_pred_full)**2.,axis=1,weights=area_flat ))
+
 
     PredictionPlot(y_test,y_pred_full,lons,lats, names_train, names_test, plot_dir,rmses)
 
