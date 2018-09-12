@@ -18,7 +18,7 @@ def TrainModel(X_train,y_train):
     print("Training Model...")
     # GP Model
     (N,p) = X_train.shape
-    kern = GPy.kern.Matern52(p,ARD=True)+GPy.kern.Linear(p,ARD=True)    
+    kern = GPy.kern.RBF(p,ARD=True)+GPy.kern.Linear(p,ARD=True)    
 
     print("kernel used: {}".format(kern))
 
@@ -85,8 +85,8 @@ def TrainTestFull(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat,plot_dir):
     y_pred,cov = TestModel(m,X_test,y_test)
     # Plot
     PlotMap(y_test,y_pred,lons,lats,names_train,names_test,plot_dir,area_flat)
-    Validation(y_test,y_pred,lons,lats,lons1,lats1,names_train,names_test,plot_dir,area_flat,metric_regions=['Global'])
-    Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred,lons,lats,lons1,lats1,area_flat,m,kern,plot_dir)
+    Validation(y_test,y_pred,lons,lats,lons1,lats1,names_train,names_test,plot_dir+TestName[0]+'_',area_flat,metric_regions=['Global'])
+    Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred,lons,lats,lons1,lats1,area_flat,m,kern,plot_dir+TestName[0]+'_')
 
 def TrainTestPCA(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat,plot_dir):
     (X_train,X_test,y_train,y_test,names_train,names_test) = split_set(X,y,Names,TestName)
@@ -105,6 +105,6 @@ def TrainTestPCA(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat,plot_dir):
     y_pred_full = y_PCA.inverse_transform(y_pred)
     # Plot
     PlotMap(y_test,y_pred_full,lons,lats,names_train,names_test,plot_dir,area_flat)
-    Validation(y_test,y_pred_full,lons,lats,lons1,lats1,names_train,names_test,plot_dir,area_flat,metric_regions=['Global'])
-    Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred_full,lons,lats,lons1,lats1,area_flat,m,kern,plot_dir)
+    Validation(y_test,y_pred_full,lons,lats,lons1,lats1,names_train,names_test,plot_dir+TestName[0]+'_',area_flat,metric_regions=['Global'])
+    Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred_full,lons,lats,lons1,lats1,area_flat,m,kern,plot_dir+TestName[0]+'_')
 
