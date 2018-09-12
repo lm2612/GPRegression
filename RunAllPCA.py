@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     # Loop over all Names as testdata
     # Setup a list of processes that we want to run
-    processes = [mp.Process(target=TrainTestPCA, args=(X,y,Names,[name],lons,lats,lons1,lats1,area_flat)) for name in Names]
+    processes = [mp.Process(target=TrainTestPCA, args=(X,y,Names,[name],lons,lats,lons1,lats1,area_flat,plot_dir)) for name in Names]
 
     # Run processes
     for p in processes:
