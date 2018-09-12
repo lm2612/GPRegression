@@ -12,7 +12,7 @@ from SplitTrainingAndTesting import split_set,split_set_random
 from AreaWeighting import Area,Area1
 from AverageRegions import AverageRegions
 from PlotPredictionVsTrue_NoScaling import PredictionPlot
-
+from Metrics import *
 # Predictor variable
 X = X_SfcTemp.copy()
 
@@ -29,7 +29,7 @@ plot_dir = '/work/lm2612/GPPCA/'
 print(Names)
 
 
-for i in range(1):
+for i in range(len(Names)):
     (X_train,X_test,y_train,y_test,names_train,names_test) = split_set_random(X,y,Names,5,20*i**2-i*4+3)
     X_PCA = PCA().fit(X_train)
     y_PCA = PCA().fit(y_train)
@@ -68,4 +68,9 @@ for i in range(1):
 
 
     PredictionPlot(y_test,y_pred_full,lons,lats, names_train, names_test, plot_dir,rmses)
+    
+    metric_regions = regions+['Global']
+    y_test_regions = AverageRegions(y_test,lons,lats,metric_regions,area_flat)
+    y_pred_regions = AverageRegions(y_pred_full,lons,lats,metric_regions,area_flat)
 
+    RegionalMetrics(y_pred_regions,y_test_regions,metric_regions,lons1,lats1,names_train,names_test,plot_dir,area_flat)
