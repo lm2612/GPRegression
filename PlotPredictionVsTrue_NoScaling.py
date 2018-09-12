@@ -20,7 +20,7 @@ def PredictionPlot(y_test,y_pred_test,lons,lats, filenames_train, filenames_test
     for t in range(y_pred_test.shape[0]):
         runname = filenames_test[t]
         print(t,runname)
-        rmse = rmses[t]
+        #rmse = rmses[t]
 
         nlon,nlat = len(lons),len(lats)
 
