@@ -26,37 +26,37 @@ def TrainModel(X_train,y_train):
     m.optimize()
 
     print("Model optimized: {}".format(m))
-    return(m)
+    return(m,kern)
 
 def TestModel(m,X_test,y_test):
     # Validation
     print("Validation Stage: Predicting and plotting... ")
     y_pred,cov = m.predict_noiseless(X_test,full_cov=True)
     print(' pred,        test ')
-    for j in range(y_test_trans.shape[0]):
-         print('{:<3f} {:>3f}'.format(y_pred[j,0],y_test_trans[j,0]))
+    for j in range(y_test.shape[0]):
+         print('{:<3f} {:>3f}'.format(y_pred[j,0],y_test[j,0]))
     return(y_pred,cov)
 
 def PlotGP(m,X_test,y_test,plot_dir):
     (N,p) = X_test.shape
     for k in range(p):
         m.plot(visible_dims=[k])
-        plt.plot(X_test_trans[:,0],y_test_trans[:,0],'r^')
+        plt.plot(X_test[:,0],y_test[:,0],'r^')
 
         plt.savefig(plot_dir+'GP_plot_dim_{}.png'.format(k))
         plt.close() 
 
-def PlotMap(y_test,y_pred,lons,lats,names_train,names_test,plot_dir):
+def PlotMap(y_test,y_pred,lons,lats,names_train,names_test,plot_dir,area_flat):
     rmses = np.sqrt(  np.average(( y_test - y_pred)**2.,axis=1,weights=area_flat ))
     PredictionPlot(y_test,y_pred,lons,lats, names_train, names_test, plot_dir,rmses)
     
-def Validation(y_test,y_pred,lons,lats,plot_dir,area_flat=np.array([1.]),metric_regions=['Global']):
+def Validation(y_test,y_pred,lons,lats,lons1,lats1,names_train,names_test,plot_dir,area_flat,metric_regions=['Global']):
     # compare RMSEs for key regions
     y_test_regions = AverageRegions(y_test,lons,lats,metric_regions,area_flat)
-    y_pred_regions = AverageRegions(y_pred_full,lons,lats,metric_regions,area_flat)
+    y_pred_regions = AverageRegions(y_pred,lons,lats,metric_regions,area_flat)
     RegionalMetrics(y_pred_regions,y_test_regions,metric_regions,lons1,lats1,names_train,names_test,plot_dir,area_flat)
 
-def Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred,lons,lats,lons1,lats1,area_flat,m,kern):
+def Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred,lons,lats,lons1,lats1,area_flat,m,kern,plot_dir):
     # save output
     filename = (plot_dir + 'output')
     print("Completed. Saving data as %s ..."%filename)
@@ -77,18 +77,18 @@ def Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred,lons,lats,l
     pickle.dump(output,open(filename,'wb') )
     print("Data saved")
 
-def TrainTestFull(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat):
+def TrainTestFull(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat,plot_dir):
     (X_train,X_test,y_train,y_test,names_train,names_test) = split_set(X,y,Names,TestName)
     # Train
-    m  = TrainModel(X_train,y_train)
+    (m,kern)  = TrainModel(X_train,y_train)
     # Predict
     y_pred,cov = TestModel(m,X_test,y_test)
     # Plot
-    PlotMap(y_test,y_pred,lons,lats,names_train,names_test,plot_dir)
-    Validation(y_test,y_pred,lons,lats,plot_dir,area_flat=np.array([1.]),metric_regions=['Global'])
-    Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred,lons,lats,lons1,lats1,area_flat,m,kern)
+    PlotMap(y_test,y_pred,lons,lats,names_train,names_test,plot_dir,area_flat)
+    Validation(y_test,y_pred,lons,lats,lons1,lats1,names_train,names_test,plot_dir,area_flat,metric_regions=['Global'])
+    Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred,lons,lats,lons1,lats1,area_flat,m,kern,plot_dir)
 
-def TrainTestPCA(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat):
+def TrainTestPCA(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat,plot_dir):
     (X_train,X_test,y_train,y_test,names_train,names_test) = split_set(X,y,Names,TestName)
     # PCA
     X_PCA = PCA().fit(X_train)
@@ -96,7 +96,7 @@ def TrainTestPCA(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat):
     X_trans = X_PCA.transform(X_train)
     y_trans = y_PCA.transform(y_train)
     # Train
-    m  = TrainModel(X_trans,y_trans)
+    (m,kern)  = TrainModel(X_trans,y_trans)
     # Test
     y_test_trans = y_PCA.transform(y_test)
     X_test_trans = X_PCA.transform(X_test)
@@ -104,7 +104,7 @@ def TrainTestPCA(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat):
     # Inverse PC
     y_pred_full = y_PCA.inverse_transform(y_pred)
     # Plot
-    PlotMap(y_test,y_pred_full,lons,lats,names_train,names_test,plot_dir)
-    Validation(y_test,y_pred_full,lons,lats,plot_dir,area_flat=np.array([1.]),metric_regions=['Global'])
-    Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred_full,lons,lats,lons1,lats1,area_flat,m,kern)
+    PlotMap(y_test,y_pred_full,lons,lats,names_train,names_test,plot_dir,area_flat)
+    Validation(y_test,y_pred_full,lons,lats,lons1,lats1,names_train,names_test,plot_dir,area_flat,metric_regions=['Global'])
+    Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred_full,lons,lats,lons1,lats1,area_flat,m,kern,plot_dir)
 
