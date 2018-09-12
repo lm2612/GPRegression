@@ -8,4 +8,4 @@ time = 5
 
 filename = datadir+'All_input_Allfixed_%syr.nc'%time
 (X_SfcTemp,X_AirTemp500,X_GeoHeight500,X_SLP,X_RF,y,
-                lons,lons1,lats,lats1,Names) = OpenFile(filename)
+                lons,lats,lons1,lats1,Names) = OpenFile(filename)
