@@ -19,7 +19,8 @@ print(area_flat.shape,X_SfcTemp.shape)
 regions = ['Europe','Africa','US','South_America','East_Asia','India']
 
 # Save to
-plot_dir = '/work/lm2612/GPPCA/'
+n_comp = 1
+plot_dir = ('/home/laura/Documents/PCA/pca_out_{}'.format(n_comp))
 
 # Test data set
 print(Names)
@@ -31,7 +32,8 @@ if __name__ == '__main__':
 
     # Loop over all Names as testdata
     # Setup a list of processes that we want to run
-    processes = [mp.Process(target=TrainTestPCA, args=(X,y,Names,[name],lons,lats,lons1,lats1,area_flat,plot_dir)) for name in Names]
+    processes = [mp.Process(target=TrainTestPCA, args=(X,y,Names,[name],lons,lats,lons1,lats1,area_flat,
+        plot_dir,n_comp,False,True)) for name in Names]
 
     # Run processes
     for p in processes:

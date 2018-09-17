@@ -88,22 +88,33 @@ def TrainTestFull(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat,plot_dir):
     Validation(y_test,y_pred,lons,lats,lons1,lats1,names_train,names_test,plot_dir+TestName[0]+'_',area_flat,metric_regions=['Global'])
     Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred,lons,lats,lons1,lats1,area_flat,m,kern,plot_dir+TestName[0]+'_')
 
-def TrainTestPCA(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat,plot_dir):
+def TrainTestPCA(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat,plot_dir,n_comp=None,pca_inputs = True,pca_outputs=True):
     (X_train,X_test,y_train,y_test,names_train,names_test) = split_set(X,y,Names,TestName)
     # PCA
-    X_PCA = PCA().fit(X_train)
-    y_PCA = PCA().fit(y_train)
-    X_trans = X_PCA.transform(X_train)
-    y_trans = y_PCA.transform(y_train)
+    if pca_inputs is True:
+        X_PCA = PCA().fit(X_train,n_comp)
+        X_trans = X_PCA.transform(X_train)
+        X_test_trans = X_PCA.transform(X_test)
+    else:
+        X_trans = X_train
+        X_test_trans = X_test
+    if pca_outputs is True:
+        y_PCA = PCA().fit(y_train,n_comp)
+        y_trans = y_PCA.transform(y_train)
+        y_test_trans = y_PCA.transform(y_test)
+    else:
+        y_trans = y_train
+        y_test_trans = y_test
     # Train
     (m,kern)  = TrainModel(X_trans,y_trans)
-    # Test
-    y_test_trans = y_PCA.transform(y_test)
-    X_test_trans = X_PCA.transform(X_test)
     y_pred,cov = TestModel(m,X_test_trans,y_test_trans)
     # Inverse PC
-    y_pred_full = y_PCA.inverse_transform(y_pred)
+    if pca_outputs is True:
+        y_pred_full = y_PCA.inverse_transform(y_pred)
+    else:
+        y_pred_full = y_pred
     # Plot
+
     PlotMap(y_test,y_pred_full,lons,lats,names_train,names_test,plot_dir,area_flat)
     Validation(y_test,y_pred_full,lons,lats,lons1,lats1,names_train,names_test,plot_dir+TestName[0]+'_',area_flat,metric_regions=['Global'])
     Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred_full,lons,lats,lons1,lats1,area_flat,m,kern,plot_dir+TestName[0]+'_')
