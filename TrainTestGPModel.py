@@ -92,14 +92,14 @@ def TrainTestPCA(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat,plot_dir,n_c
     (X_train,X_test,y_train,y_test,names_train,names_test) = split_set(X,y,Names,TestName)
     # PCA
     if pca_inputs is True:
-        X_PCA = PCA().fit(X_train,n_comp)
+        X_PCA = PCA(n_comp).fit(X_train)
         X_trans = X_PCA.transform(X_train)
         X_test_trans = X_PCA.transform(X_test)
     else:
         X_trans = X_train
         X_test_trans = X_test
     if pca_outputs is True:
-        y_PCA = PCA().fit(y_train,n_comp)
+        y_PCA = PCA(n_comp).fit(y_train)
         y_trans = y_PCA.transform(y_train)
         y_test_trans = y_PCA.transform(y_test)
     else:
