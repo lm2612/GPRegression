@@ -19,8 +19,9 @@ print(area_flat.shape,X_SfcTemp.shape)
 regions = ['Europe','Africa','US','South_America','East_Asia','India']
 
 # Save to
-n_comp = 1
-plot_dir = ('/home/laura/Documents/PCA/pca_out_{}'.format(n_comp))
+n_comp = 12 
+ 
+plot_dir = ('/work/lm2612/PCA/pca_output_{}/'.format(n_comp))
 
 # Test data set
 print(Names)
