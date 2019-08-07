@@ -22,7 +22,7 @@ TestName = ['No CO Global','No SO2 US','3X CH4']
 
 #(X_train,X_test,y_train,y_test,names_train,names_test) = split_set(Xmean,ymean,Names,TestName)
 for i in range(5):
-    (X_train,X_test,y_train,y_test,names_train,names_test) = split_set_random(Xmean,ymean,Names,5,20*i**2-i*4+3)
+    (X_train,X_test,y_train,y_test,names_train,names_test) = split_set_random(Xmean,ymean,Names,1,20*i**2-i*4+3)
 
 
     print(y_test.shape)

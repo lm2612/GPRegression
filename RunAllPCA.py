@@ -8,6 +8,11 @@ import multiprocessing as mp
 # My python scripts
 from ImportData import *
 from TrainTestGPModel import *
+from remove_ind import *
+
+Noisy = ['No Dust Arabia','No VOC Global','No SO2 India','No OC Global','No NOX Global']
+for runname in Noisy:
+       (Names,[X_SfcTemp,X_GeoHeight500,X_RF,y]) = remove_ind(Names,runname,[X_SfcTemp,X_GeoHeight500,X_RF,y] )
 
 # Predictor variable
 X = X_SfcTemp.copy()
@@ -19,9 +24,9 @@ print(area_flat.shape,X_SfcTemp.shape)
 regions = ['Europe','Africa','US','South_America','East_Asia','India']
 
 # Save to
-n_comp = 12 
+n_comp = 20
  
-plot_dir = ('/work/lm2612/PCA/pca_output_{}/'.format(n_comp))
+plot_dir = '/rds/general/user/lm2612/home/WORK/GPRemoveNoisePCA/'
 
 # Test data set
 print(Names)

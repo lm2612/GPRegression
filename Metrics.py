@@ -1,12 +1,17 @@
 from sklearn.metrics import mean_squared_error, r2_score, explained_variance_score, mean_absolute_error
+
 from sklearn.preprocessing import StandardScaler
+
 from AreaWeighting import Area
+from DefineRegions import *
+from ReadRegions import *
 import numpy as np
 import pandas as pd
+from RegionalDimReduction import split_into_regions
 
 def CalcMetrics(y_test,y_pred,areas_flat):
-    """ For this y_test, y_pred and weighting areas_flat, returns the following metrics in an array in this order: MODEL MEAN,PREDICTED MEAN, MODEL STD DEV,PREDICTED STD DEV, RMS, MAX MEAN SQ ERROR, MEAN ABS ERROR, MAX ABS ERROR, RMS PATTERN, R2, EXP VAR,NRMS"""
-    print(y_test,y_pred,areas_flat)
+    """ For this y_test, y_pred and weighting areas_flat, returns the following metrics in an array in this order: MODEL MEAN,PREDICTED MEAN, MODEL STD DEV,PREDICTED STD DEV, RMS, MAX MEAN SQ ERROR, MEAN ABS ERROR, MAX ABS ERROR, RMS PATTERN, R2, EXP VAR,NRMSE"""
+    print(y_test.shape,y_pred.shape,areas_flat.shape)
     mean_y_test = np.average(y_test,weights=areas_flat)
     mean_y_pred = np.average(y_pred,weights=areas_flat)
         
@@ -14,21 +19,59 @@ def CalcMetrics(y_test,y_pred,areas_flat):
     std_y_pred = np.sqrt(np.average((y_pred - mean_y_pred)**2.,weights=areas_flat))
 
     # RMS on overall differences
-    rms_sk = np.sqrt( mean_squared_error(y_test,y_pred,areas_flat))
+    mean_sq = mean_squared_error(y_test,y_pred,areas_flat)
+    rms_sk = np.sqrt(mean_sq)
+    
+    # Normalise
     abs_change = np.average(np.abs(y_test),weights=areas_flat)
+    pred_abs_change = np.average(np.abs(y_pred),weights=areas_flat)
     nrms = rms_sk/abs_change
 
     # Max Mean square
-    rms = ((y_test - y_pred)**2)
-    max_rms = np.max(rms)
+    ms = ((y_test - y_pred)**2)
+    max_sq = np.max(ms)
+    min_sq = np.min(ms)
+
+    # median sq deviation (MAD)
+    med_sq = np.median(ms)
+    # upper and lower quartiles - gives us distribution of errors
+    lq_sq = np.quantile(ms, 0.25)
+    uq_sq = np.quantile(ms,0.75)
+    sq_errors = {'mean_sq':mean_sq,
+                  'median_sq':med_sq,
+                  'min_sq':min_sq,
+                  'max_sq':max_sq,
+                  'lq_sq':lq_sq,
+                  'uq_sq':uq_sq}
 
     # Mean absolute error
     mean_abs = mean_absolute_error(y_test,y_pred,areas_flat)
 
     # max abs error
-    abs_err = np.sqrt((y_test-y_pred)**2)
+    abs_err = np.abs((y_test-y_pred))
     max_abs = np.max(abs_err)
-               
+    min_abs = np.min(abs_err)
+    
+    # median abs deviation (MAD)
+    med_abs = np.median(abs_err)
+    # upper and lower quartiles - gives us distribution of errors
+    lq_abs = np.quantile(abs_err, 0.25)
+    uq_abs = np.quantile(abs_err,0.75)
+    
+    abs_errors = {'mean_abs':mean_abs,
+                  'median_abs':med_abs,
+                  'min_abs':min_abs,
+                  'max_abs':max_abs,
+                  'lq_abs':lq_abs,
+                  'uq_abs':uq_abs}
+
+    # mean percentage error (note inf when y_test=0)
+    per_error = (y_test - y_pred)/y_test
+    mean_per = np.average(per_error,weights=areas_flat)
+    med_per = np.nanquantile(per_error,0.5)
+
+
+
     # RMS on PATTERN (normalise y_pred and y_test first)
     if std_y_test >0.:
         y_test_scaled = (y_test-mean_y_test)/std_y_test
@@ -42,178 +85,57 @@ def CalcMetrics(y_test,y_pred,areas_flat):
     # explained_variance score
     exp_var = explained_variance_score(y_test,y_pred,areas_flat)
 
-    return [mean_y_test, mean_y_pred, std_y_test, std_y_pred, rms_sk, max_rms, mean_abs, max_abs, rms_pattern, r2, exp_var,nrms]
+    metrics_dict = {'Model Mean':mean_y_test,
+                    'Predicted Mean':mean_y_pred,
+                    'Model Std Dev':std_y_test,
+                    'Predicted Std Dev':std_y_pred,
+                    'Model Abs Mean':abs_change,
+                    'Predicted Abs Mean':pred_abs_change,
+                    'RMSE':rms_sk,
+                    'R2':r2,
+                    'Expl Var':exp_var,
+                    'RMSE Pattern':rms_pattern,
+                    'mean_percentage_error':mean_per
+                   }
+    metrics_dict.update(abs_errors)
+    metrics_dict.update(sq_errors)
 
+    return metrics_dict 
 
+def RegionalMetrics(y_pred,y_test,Regions,lons,lats,lons1,lats1, filenames_train, filenames_test,savefolder,areas_flat):
+    Ntest,p = y_pred.shape
+    print(y_pred.shape)
+    # check Ntest == 1
+    full_metrics_dict = {}
+    Nreg = len(Regions)
+    # Do global metrics on full grid
+    metrics_dict = CalcMetrics(y_test[0,:],y_pred[0,:],areas_flat)
+    # Initialise full metric dictionary and add the full global metrics
+    keys = metrics_dict.keys()
+    full_metrics_dict = {"Regions":["Full Grid"]+Regions+["All Regions"]}
+    for key in keys:
+        full_metrics_dict[key] = np.zeros((Nreg+2))
+        full_metrics_dict[key][0] = metrics_dict[key]
+    # Now do regional metrics by taking average over regions
+    y_pred_reg = split_into_regions(y_pred,areas_flat,
+                    lons,lats,lons1,lats1,Regions)
+    y_test_reg = split_into_regions(y_test,areas_flat,
+                    lons,lats,lons1,lats1,Regions)
 
-def Metrics(y_pred_all,y_test_all,lons1,lats1, filenames_train, filenames_test,savefolder=None,BestAlpha=None):
-    """ Calculates and returns important metrics for comparison of y_pred
-    against true values y_test : including RMS (global avg, max abs value, avg in region of NH, avg in region of perturbed emission, avg in region of emission and neighboring regions eg. oceans), correlations between y_pred and y_test """
-    areas = Area(lons1,lats1)
-    areas_flat = areas.flatten() # Should now be same size as y_pred
-    N,p = y_pred_all.shape
-    print(N,p)
-    print('trained on :', filenames_train,
-    "METRICS: MODEL MEAN, PREDICTED MEAN, MODEL STD DEV, PREDICTED STD DEV, RMS, MAX MEAN SQ ERROR, MEAN ABS ERROR, MAX ABS ERROR, RMS PATTERN, R2, EXP VAR, NORMALISED RMS" )
-    Metrics_titles = ['Model Mean','Predicted Mean','Model Std Dev','Predicted Std Dev', 'RMSE','Max MSE','Mean Abs Err','Max Abs Err','RMSE Pattern','R2','Expl Var','NMRS']
+    for (i,reg) in zip(range(Nreg),Regions):
+        print(i,y_pred_reg[0,i])
+        metrics_dict = CalcMetrics(np.array([y_test_reg[0,i]]),np.array([y_pred_reg[0,i]]),np.array([1.0]))
+        for key in metrics_dict.keys():
+            full_metrics_dict[key][i+1] = metrics_dict[key]
 
-    N_metrics = len(Metrics_titles)
-    global_metrics_all = np.zeros((N,N_metrics))
-    NHML_metrics_all = np.zeros((N,N_metrics))
-    NH_metrics_all = np.zeros((N,N_metrics))
-    Regional_metrics_all = np.zeros((N,N_metrics))
+    metrics_dict = CalcMetrics(y_test_reg[0,:],y_pred_reg[0,:],np.ones(Nreg))
+    for key in keys:
+        full_metrics_dict[key][Nreg+1] = metrics_dict[key]
 
-    for n in range(N):
-        y_test = y_test_all[n,:]
-        y_pred = y_pred_all[n,:]
-        filename = filenames_test[n] 
-
-        global_metrics = CalcMetrics(y_test,y_pred,areas_flat)
-        global_metrics_all[n,:] = global_metrics
-
-
-        # Check NHML metrics and NH metrics
-        NHML_grid = RegionGrids['NHML']
-        # Give 0 weighting to regions outside NHML
-        NHML_metrics = CalcMetrics(y_test,y_pred,areas_flat*NHML_grid)
-        NHML_metrics_all[n,:] = NHML_metrics
-
-
-        # NH metric
-        NH_grid = RegionGrids['NH']
-        NH_metrics = CalcMetrics(y_test,y_pred,areas_flat*NH_grid)        
-        NH_metrics_all[n,:] = NH_metrics
-
-
-        # Print regional metrics, if not global
-        region = RegionContained(filename)
-        print(region)
-        if region is not 'Global':
-            Regional_grid = RegionGrids[region]
-            Regional_metrics = CalcMetrics(y_test,y_pred,areas_flat*Regional_grid)
-            Regional_metrics_all[n,:] = Regional_metrics
-        else:
-            Regional_metrics_all[n,:] = None
-    if savefolder is None:
-        return Metrics_titles,filenames_train,filenames_test,global_metrics_all,NHML_metrics_all,NH_metrics_all,Regional_metrics_all
-
-    # Otherwise, save files to savefolder
-    # Save Metrics to csv file so can be opened in Excel
-
-    N_test = len(filenames_test)
-    N_metrics = len(Metrics_titles)
-    Metrics_titles_full = []
-    global_metrics_full = np.empty(0)
-    NHML_metrics_full = np.empty(0)
-    NH_metrics_full = np.empty(0)
-    Regional_metrics_full = np.empty(0)
-
-    if BestAlpha is not None:
-        Metrics_titles_full.append('This run was done with alpha %s'%(BestAlpha['alpha']))
-        global_metrics_full=np.append(global_metrics_full, None)
-        NHML_metrics_full=np.append(NHML_metrics_full, None)
-        NH_metrics_full=np.append(NH_metrics_full, None)
-        Regional_metrics_full=np.append(Regional_metrics_full, None)
-
-    for i in range(N_test):
-        # Create space between test runs with title of test run
-        Metrics_titles_full.append('TEST %s:  %s'%(i+1,filenames_test[i]))
-        global_metrics_full=np.append(global_metrics_full, None)
-        NHML_metrics_full=np.append(NHML_metrics_full, None)
-        NH_metrics_full=np.append(NH_metrics_full, None)
-        Regional_metrics_full=np.append(Regional_metrics_full, None)
-
-        # Add metrics
-        Metrics_titles_full = Metrics_titles_full+ Metrics_titles
-        global_metrics_full = np.append(global_metrics_full,global_metrics_all[i,:])
-        NHML_metrics_full = np.append(NHML_metrics_full,NHML_metrics_all[i,:])
-        NH_metrics_full = np.append(NH_metrics_full,NH_metrics_all[i,:])
-        Regional_metrics_full = np.append(Regional_metrics_full,Regional_metrics_all[i,:])
-
-    print(len(global_metrics_full))
-    print(len(Metrics_titles_full))
-
-    raw_data = {'METRICS':Metrics_titles_full,
-            'Global': global_metrics_full ,
-            'NHML': NHML_metrics_full,
-            'NH': NH_metrics_full,
-            'Regional': Regional_metrics_full}
-    df = pd.DataFrame(raw_data,columns = ['METRICS','Global','NHML','NH','Regional'])
-    df.to_csv(savefolder+'Metrics.csv')
-
-    return Metrics_titles,filenames_train,filenames_test,global_metrics_all,NHML_metrics_all,NH_metrics_all,Regional_metrics_all
-
-
-def GlobalMetrics(y_pred,y_test,lons1,lats1, filenames_train, filenames_test,savefolder=None,areas_flat=None):
-    Ntest =len(y_pred)
-    areas_flat=np.array([1.0])
-
-    Metrics_titles=['Model Mean','Predicted Mean','Model Std Dev','Predicted Std Dev', 'RMSE','Max MSE','Mean Abs Err','Max Abs Err','RMSE Pattern','R2','Expl Var','NMRS']
-    N_metrics = len(Metrics_titles)
-
-    global_metrics_all = np.zeros((Ntest,N_metrics))
-    for i in range(Ntest):
-        global_metrics = CalcMetrics(np.array(y_test[i]),np.array(y_pred[i]),areas_flat)
-        global_metrics_all[i] = global_metrics
- 
-    # save
-    Metrics_titles_full = []
-    global_metrics_full = np.empty(0)
-
-    for i in range(Ntest):
-        # Create space between test runs with title of test run
-        Metrics_titles_full.append('TEST %s:  %s'%(i+1,filenames_test[i]))
-        global_metrics_full=np.append(global_metrics_full, None)
-
-        # Add metrics
-        Metrics_titles_full = Metrics_titles_full+ Metrics_titles
-        global_metrics_full = np.append(global_metrics_full,global_metrics_all[i,:])
-
-
-
-
-    raw_data = {'METRICS':Metrics_titles_full,
-                'Global': global_metrics_full }
-
-    df = pd.DataFrame(raw_data,columns = ['METRICS','Global'])
-    df.to_csv(savefolder+'Metrics.csv')
-
-    return Metrics_titles,filenames_train,filenames_test,global_metrics_all
-
-
-
-def RegionalMetrics(y_pred,y_test,Regions,lons1,lats1, filenames_train, filenames_test,savefolder=None,areas_flat=None):
-    Ntest,Nregs =(y_pred.shape)
-    print(Nregs,Ntest)
-    areas_flat = np.array([1.0])
-
-    Metrics_titles=['Model Mean','Predicted Mean','Model Std Dev','Predicted Std Dev', 'RMSE','Max MSE','Mean Abs Err','Max Abs Err','RMSE Pattern','R2','Expl Var','NMRS']
-    N_metrics = len(Metrics_titles)
-    Metrics_titles_full = []
-    for i in range(Ntest):
-        # Create space between test runs with title of test run
-        Metrics_titles_full.append('TEST %s:  %s'%(i+1,filenames_test[i]))
-        # Add metrics
-        Metrics_titles_full = Metrics_titles_full+ Metrics_titles
-
-    raw_data = {'METRICS':Metrics_titles_full}
-    for j in range(Nregs):
-        reg = Regions[j]
-        print(reg)
-        regional_metrics_all = np.zeros((Ntest,N_metrics))
-        global_metrics_full = np.empty(0)
-        for i in range(Ntest):
-            global_metrics = CalcMetrics(np.array([y_test[i,j]]),np.array([y_pred[i,j]]),areas_flat)
-            regional_metrics_all[i] = global_metrics
-
-            global_metrics_full=np.append(global_metrics_full, None)
-            global_metrics_full = np.append(global_metrics_full,regional_metrics_all[i,:])
-
-        raw_data[reg] = global_metrics_full
-
-    print(raw_data)
-
-    colnames = ['METRICS']+Regions
+    colnames = ["Regions"]+ list(keys)
     print(colnames)
-    df = pd.DataFrame(raw_data,columns = colnames)
+    print(full_metrics_dict)
+    df = pd.DataFrame(data=full_metrics_dict,columns = colnames)
+    print(df)
     df.to_csv(savefolder+'RegionalMetrics.csv')
+    return full_metrics_dict

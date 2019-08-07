@@ -14,31 +14,45 @@ from PlotPredictionVsTrue_NoScaling import PredictionPlot
 from Metrics import *
 from GPerrors import *
 from RegionLatitudes import *
+from PlotGPErrs import *
 
-def TrainModel(X_train,y_train):
+def TrainModel(X_train,y_train,X_test,y_test):
     print("Training Model...")
     # GP Model
     (N,p) = X_train.shape
-    #kern = GPy.kern.RBF(p,ARD=True)**GPy.kern.Coregionalize(1,output_dim=y_train.shape[1],active_dims=[2], rank=4)+GPy.kern.Linear(p,ARD=True)**GPy.kern.Coregionalize(1,output_dim=y_train.shape[1], active_dims=[2],rank=4)
+    y_pred = np.zeros(y_test.shape)
+    cov = np.zeros(y_test.shape)
+    for i in range(y_train.shape[1]):
+        sigma = np.std(y_train[:,i])
+        variance = sigma**2.
+        kern = GPy.kern.RBF(p,variance=variance,ARD=True)+GPy.kern.Linear(p,ARD=True)
+        m = GPy.models.GPRegression(X_train,y_train[:,i].reshape(-1,1),kern)
+        y_pred_i,cov_i = m.predict(X_test,full_cov=False)
+        y_pred[:,i] = y_pred_i[:,0]
+        cov[:,i] = cov_i[:,0]
 
-    kern = GPy.kern.RBF(p,ARD=True)+GPy.kern.Linear(p,ARD=True)
+        if i%1000==0:
+            print("Iteration ",i)
+            print("Sigma ",sigma)
 
-    print("kernel used: {}".format(kern))
-    #icm = GPy.util.multioutput.ICM(input_dim=p,num_outputs=p,kernel=kern)
-    #m = GPy.models.GPCoregionalizedRegression(X_train,y_train,icm)
-    m = GPy.models.GPRegression(X_train,y_train,kern)
-    m.optimize()
-
-    print("Model optimized: {}".format(m))
-    return(m,kern)
+    return(y_pred,cov)
 
 def TestModel(m,X_test,y_test):
     # Validation
     print("Validation Stage: Predicting and plotting... ")
-    y_pred,cov = m.predict(X_test,full_cov=False)
+    y_pred = np.zeros(y_test.shape)
+    cov = np.zeros(y_test.shape)
+    for i in range(len(m)):
+        m_i = m[i]
+        y_pred_i,cov_i = m_i.predict(X_test,full_cov=False)
+        y_pred[:,i] = y_pred_i[:,0]
+        cov[:,i] = cov_i[:,0]
+        
     print(' pred,        test ')
     for j in range(y_test.shape[0]):
          print('{:<3f} {:>3f}'.format(y_pred[j,0],y_test[j,0]))
+    print(cov)
+    """
     print(X_test.shape)
     print(y_test.shape)
     print(cov)
@@ -47,9 +61,9 @@ def TestModel(m,X_test,y_test):
     print('2.5 quantile err')
     print(err[0].shape)
     print(err[0])
-    gp_err = y_pred- (err[0])
+    gp_err = y_pred- (err[0])i
     print(gp_err.shape)
-    print(gp_err)
+    print(gp_err)"""
     return(y_pred,cov)
 
 
@@ -96,14 +110,14 @@ def Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred,lons,lats,l
 
 def TrainTestFull(X,y,Names,TestName,lons,lats,lons1,lats1,area_flat,plot_dir):
     (X_train,X_test,y_train,y_test,names_train,names_test) = split_set(X,y,Names,TestName)
-    # Train
-    (m,kern)  = TrainModel(X_train,y_train)
-    # Predict
-    y_pred,cov = TestModel(m,X_test,y_test)
+    # Train and pred
+    y_pred,cov  = TrainModel(X_train,y_train,X_test,y_test)
     # Plot
     PlotMap(y_test,y_pred,lons,lats,names_train,names_test,plot_dir,area_flat)
+    PlotErrs(cov,lons,lats,names_train,names_test,plot_dir,area_flat)
     regions_all = ['Global']+list(RegionsList)
     print(y_pred.shape)
+    
     for v in range(len(TestName)):
         Validation(y_test[v:v+1,],y_pred[v:v+1,:],cov[v:v+1,:],lons,lats,lons1,lats1,names_train,names_test,plot_dir+TestName[v]+'_',area_flat,metric_regions=regions_all)
     #Save(names_train,names_test,X_train,X_test,y_train,y_test,y_pred,lons,lats,lons1,lats1,area_flat,m,kern,plot_dir+TestName[0]+'_')

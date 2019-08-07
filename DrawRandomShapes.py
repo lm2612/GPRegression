@@ -1,13 +1,14 @@
 from PlotPredictionVsTrue_NoScaling import *
 from plotmapfunction import *
 import numpy as np
+import pandas as pd
 #from ImportData import *
 import GPy
 # Try diff lengthscales (degrees)
 Lengthscales = [1.,5.,10.,30.,45.,60.,90.,100.,180.,360.,1000.]
 p = 2  # lon and lat
-nlon,nlat = 192,144
-nlon,nlat = 60,30
+nlon,nlat = 192,145
+#nlon,nlat = 60,30
 lats = np.linspace(-90.,90.,nlat)
 lons = np.linspace(0.,360.,nlon)
 # our inputs are lats and lons
@@ -66,7 +67,7 @@ for L in Lengthscales:
     plotmap(lons,lats,y_pred,savefile=save, cmap="RdBu_r", levels=levels,
             variable_label='',plottitle='Prior',plotaxis=None,colorbar=1.0)
 
-
+    
     y_pred = y_pred.flatten()
     y_true = y[0,:]
 
@@ -77,4 +78,7 @@ for L in Lengthscales:
     print('Lengthscale: ',L)
     print('RMSE: ',rmse)
 
+    data = {'y_pred':y_pred}
+    df = pd.DataFrame(data,columns=['y_pred'])
+    df.to_csv('/work/lm2612/GPprior/prediction.csv')
 

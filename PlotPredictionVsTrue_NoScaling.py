@@ -27,11 +27,11 @@ def PredictionPlot(y_test,y_pred_test,lons,lats, filenames_train, filenames_test
         y_reshaped = y_test[t,:].reshape((nlat,nlon))
         y_pred_reshaped = y_pred_test[t,:].reshape((nlat,nlon))
 
-        absmax =  np.max(np.abs(y_pred_reshaped))
+        absmax =  np.max(np.abs(y_reshaped))
         yplot_pred = (1./absmax)*y_pred_reshaped
-        maxlvl = np.ceil(absmax*0.8)
+        maxlvl = np.ceil(absmax*0.5)
 
-        levels = np.arange(-maxlvl,maxlvl+0.01,0.2)
+        levels = np.linspace(-maxlvl,maxlvl+0.01,100)
 
         plt.clf()
         fig = plt.figure(figsize=(11,5))

@@ -3,7 +3,11 @@ import os
 def GetDir():
         cwd = os.getcwd()
         print("Directory: {0}".format(cwd))
-        if ('cx1' in cwd) or ('/export' in cwd):
+        return('/work/lm2612/data/AvgData/')
+        if 'tmp/' in cwd:
+           # on cx1
+           datadir = '/work/lm2612/data/AvgData/'
+        if ('cx1' in cwd) or ('/rds/' in cwd):
            # on cx1
            datadir = '/work/lm2612/data/AvgData/'
         elif ( '/home/d01/laman' in cwd ) or ('/scratch/jtmp/'in cwd ):
