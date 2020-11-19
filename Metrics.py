@@ -117,10 +117,14 @@ def RegionalMetrics(y_pred,y_test,Regions,lons,lats,lons1,lats1, filenames_train
         full_metrics_dict[key] = np.zeros((Nreg+2))
         full_metrics_dict[key][0] = metrics_dict[key]
     # Now do regional metrics by taking average over regions
-    y_pred_reg = split_into_regions(y_pred,areas_flat,
+    if p>1000:
+        y_pred_reg = split_into_regions(y_pred,areas_flat,
                     lons,lats,lons1,lats1,Regions)
-    y_test_reg = split_into_regions(y_test,areas_flat,
+        y_test_reg = split_into_regions(y_test,areas_flat,
                     lons,lats,lons1,lats1,Regions)
+    else:
+        y_pred_reg = y_pred
+        y_test_reg = y_test
 
     for (i,reg) in zip(range(Nreg),Regions):
         print(i,y_pred_reg[0,i])
