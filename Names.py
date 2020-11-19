@@ -25,7 +25,10 @@ names = ['No SO2 China',
              'No NOX Global',
 	     'No CO Global',
 	     'No VOC Global',
-	     'No CH4 Global']
+	     'No CH4 Global',
+             'No BB Tropics',
+             '10X BB Tropics',
+             '10X SO2 Tropics']
 
 
 matt_names = ['No SO2 China',
