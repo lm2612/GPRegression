@@ -8,9 +8,8 @@ def split_set(X,y,names,TestNames):
     # Check all listed scenarios are in names
     check = ([TestName in names for TestName in TestNames])
     assert (all(check)),'All scenarios listed in TestNames must be in names. Check for typo in following: {}'.format(list(np.array(TestNames)[[not i for i in check]])) 
-
     idx_test = [names.index(TestName) for TestName in TestNames]
-    idx_train = [idx for idx in range(len(names)) if idx!=idx_test]
+    idx_train = [idx for idx in range(len(names)) if idx not in idx_test]
     X_train,X_test = X[idx_train],X[idx_test]
     y_train,y_test = y[idx_train],y[idx_test]
     names_train = [names[idx] for idx in idx_train]

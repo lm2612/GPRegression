@@ -3,9 +3,10 @@ import os
 # Get dictionary called filenames containing file names for each file code
 from FileCodesToName import *
 
-def OpenFile(filename):
+def OpenFile(filename,ListOfVarNames=['SfcTemp','AirTemp','GeoHeight','SLP',
+                      'RF','SfcTempResponse']):
     """ filename is the name of file to open, must be correct directory """
-    print("Opening %s ... "%(filename))
+    print(("Opening %s ... "%(filename)))
     # Copy dimension and information for meta data
     dataset = netCDF4.Dataset(filename, 'r',format='NETCDF4_CLASSIC')
 
@@ -14,8 +15,6 @@ def OpenFile(filename):
     Files = netCDF4.chartostring(Samples)
 
     # Variables we will extract
-    ListOfVarNames = ['SfcTemp','AirTemp','GeoHeight','SLP',
-                      'RF','SfcTempResponse']
     ListOfVars = []
         
     # Get variables and add to ListOfVars
@@ -24,15 +23,25 @@ def OpenFile(filename):
         try: 
             Var = dataset.variables[VarName][:]
         except KeyError: 
-            print("Warning: Variable {0} does not exist in file {1}."
-                " Continue for now but this may cause issues later ".format(VarName,filename))
+            print(("Warning: Variable {0} does not exist in file {1}."
+                " Continue for now but this may cause issues later ".format(VarName,filename)))
             Var = None
         ListOfVars.append(Var)
+    try: 
+        lons = dataset.variables['longitude'][:]
+        lats = dataset.variables['latitude'][:]
+    except KeyError: 
+        print(" Warning lons/lats does not exist")
+        lons= None
+        lats = None    
 
-    lons = dataset.variables['longitude'][:]
-    lons1 = dataset.variables['longitude_1'][:]
-    lats = dataset.variables['latitude'][:]
-    lats1 = dataset.variables['latitude_1'][:]
+    try:
+        lons1 = dataset.variables['longitude_1'][:]
+        lats1 = dataset.variables['latitude_1'][:]
+    except KeyError:
+        print(" Warning lons1/lats1 does not exist")  
+        lons1= None 
+        lats1 = None
 
     filecodes = Files
     Names = []
@@ -40,7 +49,7 @@ def OpenFile(filename):
         Names.append(filenames[filecodes[i]])
     nlon = len(lons)
     nlat = len(lats)  
-    print("Scenarios: {0}".format(Names))
+    print(("Scenarios: {0}".format(Names)))
     print("Done opening file ") 
     
     ReturnVars = ListOfVars + [lons,lats,lons1,lats1,Names]
