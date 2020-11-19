@@ -47,3 +47,10 @@ RegionOnlyLonsLats = {'Arctic':(0.,360.,66.,90.),
         'Oceania':(100.,180. ,-50., 10.),
         'EastAsia':(100.,145.,10.,66. )}
 RegionOnlyList = list(RegionOnlyLonsLats.keys())
+
+RegionList = ['US','Europe','China','East_Asia','India','Arabia','Asia','Africa','South_America']
+for reg in RegionList:
+    ext_reg = reg+'_ext'
+    (xmin,xmax,ymin,ymax) = RegionLonsLats[reg]
+    RegionLonsLats[ext_reg] = ( xmin-10.,xmax+10.,ymin-10.,ymax+10.)
+print(type(RegionLonsLats))

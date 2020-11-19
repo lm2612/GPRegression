@@ -22,7 +22,7 @@ def DefineRegion(region,lons,lats):
     dictionary in RegionLatitudes """
     nlon , nlat = len(lons), len(lats)
     # Get min and max lons and lats from dict in RegionLatitudes
-    lonmin,lonmax,latmin,latmax=RegionLonsLats[region]
+    (lonmin,lonmax,latmin,latmax)=RegionLonsLats[region]
     # Initialise grid
     grid = np.zeros((nlat,nlon))
 
@@ -52,6 +52,7 @@ def RegionContained(experimentname):
             continue 
     
     return 'Global'
+
 
 
 
