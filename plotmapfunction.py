@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap,shiftgrid
 
 def plotmap(lons,lats,variable,savefile=None, cmap="RdBu_r", levels=None,
-            variable_label='',plottitle='',plotaxis=None,colorbar=1.0):
+            variable_label='',plottitle='',plotaxis=None,colorbar=1.0,extend='both'):
     """ Plots a map and displays output or saves to file with path 
     and filename savefile (string). Inputs are lons, lats and the variable
     in format they are outputted from ReadFile (ie from netcdf file). 
@@ -26,7 +26,7 @@ def plotmap(lons,lats,variable,savefile=None, cmap="RdBu_r", levels=None,
     bmap.drawcountries(linewidth=0.25)
     
     # draw the edge of the map projection region (the projection limb)
-    bmap.drawmapboundary(fill_color='lightseagreen')
+    bmap.drawmapboundary(fill_color='white')
     # draw lat/lon grid lines every 30 degrees.
     bmap.drawmeridians(np.arange(0,360,30))
     bmap.drawparallels(np.arange(-90,90,30))
@@ -45,7 +45,7 @@ def plotmap(lons,lats,variable,savefile=None, cmap="RdBu_r", levels=None,
     
     # Plot map
     colmap = bmap.contourf(longrid,latgrid,variable,cmap=cmap,
-                        levels=levels,extend='both')
+                        levels=levels,extend=extend)
     if colorbar == 1.0:
         cbar = bmap.colorbar()
         cbar.set_label(variable_label)
